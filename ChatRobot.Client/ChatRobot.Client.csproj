@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="DotNetty.Buffers" Version="0.7.6" />
+      <PackageReference Include="DotNetty.Codecs" Version="0.7.6" />
+      <PackageReference Include="DotNetty.Common" Version="0.7.6" />
+      <PackageReference Include="DotNetty.Handlers" Version="0.7.6" />
+      <PackageReference Include="DotNetty.Transport" Version="0.7.6" />
+      <PackageReference Include="Google.Protobuf" Version="3.30.2" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0-preview.2.25163.2" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0-preview.2.25163.2" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-preview.2.25163.2" />
+      <PackageReference Include="Serilog.Settings.Configuration" Version="9.0.1-dev-02317" />
+      <PackageReference Include="Serilog.Sinks.Console" Version="6.0.1-dev-00953" />
+      <PackageReference Include="Serilog.Sinks.File" Version="7.0.0-dev-02301" />
+    </ItemGroup>
+
+</Project>
