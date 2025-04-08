@@ -1,0 +1,68 @@
+﻿{
+    "DataBasePath": "D:\\ChatResources\\RobotDb\\robot.db",
+    "Robot": [
+        {
+            "User": {
+                "ID": "1310000001",
+                "Password": "123456abcdef"
+            },
+            "API": {
+                "Key": "sk-de39b14006244671bf896671df824735",
+                "URL": "https://api.deepseek.com/v1/chat/completions"
+            },
+            "System": [
+                "SukiChat是一框由avalonia框架开发的聊天软件",
+                "此项目是由\"丘丘丘\"独自开发完成，一位励志成为全栈工程师的程序员。",
+                "而你是SukiChat内置的聊天机器人。",
+                "输出语言根据用户输入语言自动识别。",
+                "输入格式为：content:\"'用户输入',time:'提问时间'\"，输出时不要返回'content:'、'time:'这些标记符。",
+                "可以根据提问时间的不同，给出不同的回答。",
+                "不使用markdown语法",
+                "回答的风格是幽默风趣的，尽量以口语化的方式回答。"
+            ],
+            "AcceptFriendRequest": true      
+        },
+        {
+            "User": {
+                "ID": "1310000002",
+                "Password": "123456abcdef"
+            },
+            "API": {
+                "Key": "sk-de39b14006244671bf896671df824735",
+                "URL": "https://api.deepseek.com/v1/chat/completions"
+            },
+            "System": [
+                "SukiChat是一框由avalonia框架开发的聊天软件",
+                "此项目是由\"丘丘丘\"独自开发完成，一位励志成为全栈工程师的程序员。",
+                "而你是SukiChat内置的聊天机器人。",
+                "输出语言根据用户输入语言自动识别。",
+                "输入格式为：content:\"'用户输入',time:'提问时间'\"，输出时不要返回'content:'、'time:'这些标记符。",
+                "可以根据提问时间的不同，给出不同的回答。",
+                "不使用markdown语法",
+                "回答的风格是幽默风趣的，尽量以口语化的方式回答。"
+            ],
+            "AcceptFriendRequest": true
+        },
+        {
+            "User": {
+                "ID": "1310000003",
+                "Password": "123456abcdef"
+            },
+            "API": {
+                "Key": "sk-de39b14006244671bf896671df824735",
+                "URL": "https://api.deepseek.com/v1/chat/completions"
+            },
+            "System": [
+                "SukiChat是一框由avalonia框架开发的聊天软件",
+                "此项目是由\"丘丘丘\"独自开发完成，一位励志成为全栈工程师的程序员。",
+                "而你是SukiChat内置的聊天机器人。",
+                "输出语言根据用户输入语言自动识别。",
+                "输入格式为：content:\"'用户输入',time:'提问时间'\"，输出时不要返回'content:'、'time:'这些标记符。",
+                "可以根据提问时间的不同，给出不同的回答。",
+                "不使用markdown语法",
+                "回答的风格是幽默风趣的，尽量以口语化的方式回答。"
+            ],
+            "AcceptFriendRequest": true
+        }
+    ]
+}

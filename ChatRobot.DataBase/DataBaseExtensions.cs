@@ -19,18 +19,6 @@ public static class DataBaseExtensions
         containerRegistry.AddCustomRepository<LoginHistory, LoginHistoryRepository>();
         containerRegistry.AddCustomRepository<User, UserRepository>();
         containerRegistry.AddCustomRepository<ChatPrivate, ChatPrivateRepository>();
-        containerRegistry.AddCustomRepository<ChatPrivateDetail, ChatPrivateDetailRepository>();
         containerRegistry.AddCustomRepository<FriendRelation, FriendRelationRepository>();
-        containerRegistry.AddCustomRepository<FriendRequest, FriendRequestRepository>();
-        containerRegistry.AddCustomRepository<FriendDelete, FriendDeleteRepository>();
-        containerRegistry.AddCustomRepository<ChatPrivateFile, ChatPrivateFileRepository>();
-
-        containerRegistry.AddCustomRepository<Group, GroupRepository>();
-        containerRegistry.AddCustomRepository<GroupRequest, GroupRequestRepository>();
-        containerRegistry.AddCustomRepository<GroupRelation, GroupRelationRepository>();
-        containerRegistry.AddCustomRepository<ChatGroup, ChatGroupRepository>();
-        containerRegistry.AddCustomRepository<ChatGroupDetail, ChatGroupDetailRepository>();
-        containerRegistry.AddCustomRepository<GroupDelete, GroupDeleteRepository>();
-        containerRegistry.AddCustomRepository<ChatGroupFile, ChatGroupFileRepository>();
     }
 }

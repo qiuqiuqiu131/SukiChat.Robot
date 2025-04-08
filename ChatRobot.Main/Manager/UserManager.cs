@@ -1,18 +1,24 @@
-﻿using ChatRobot.Client.Client;
+﻿using AutoMapper;
+using ChatRobot.Client.Client;
+using ChatRobot.DataBase.Data;
+using ChatRobot.Main.Entity;
+using ChatRobot.Main.Helper;
+using ChatRobot.Main.Service;
 using ChatServer.Common;
 using ChatServer.Common.Protobuf;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
 namespace ChatRobot.Main.Manager;
 
 public interface IUserManager
 {
+    Robot Robot { get; set; }
     bool IsLogin { get; }
     string UserId { get; }
+    User User { get;}
     
     Task<bool> Login(string userId, string password);
-    void OnLoginResponse(LoginResponse response);
-
     void OnLogoutCommand(LogoutCommand message);
     void OnLogout();
 }
@@ -21,54 +27,80 @@ public class UserManager : IUserManager
 {
     private readonly ISocketClient _socketClient;
     private readonly ILogger _logger;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IMapper _mapper;
 
+    public Robot Robot { get; set; }
     public bool IsLogin { get; private set; }
     public string UserId { get; private set; }
+    public User User { get; private set; }
 
-    public UserManager(ISocketClient socketClient,ILogger logger)
+    public UserManager(ISocketClient socketClient,ILogger logger,IServiceProvider serviceProvider,IMapper mapper)
     {
         _socketClient = socketClient;
         _logger = logger;
+        _serviceProvider = serviceProvider;
+        _mapper = mapper;
     }
 
     #region Login
-
-    private TaskCompletionSource<bool>? _taskCompletionSource;
     public async Task<bool> Login(string userId, string password)
     {
-        _taskCompletionSource = new TaskCompletionSource<bool>();
+        var messageHelper = _serviceProvider.GetRequiredService<IMessageHelper>();
+        
+        // -- 1、登录请求 -- //
         var loginRequest = new LoginRequest
         {
             Id = userId,
             Password = password,
         };
-        await _socketClient.Channel!.WriteAndFlushProtobufAsync(loginRequest);
-        // 等待登录结果
-        var result = await _taskCompletionSource.Task;
-        if(result)
-        {
-            IsLogin = true;
-            UserId = userId;
-            _logger.Information("机器人\"{UserId}\" 登录成功", userId);
-        }
-        else
+        var result1 = await messageHelper.SendMessageWithResponse<LoginResponse>(loginRequest);
+        
+        // 处理登录结果
+        if(!(result1?.Response.State ?? false))
         {
             IsLogin = false;
             UserId = string.Empty;
             _logger.Error("登录失败,请检查用户名和密码");
+            return false;
         }
         
-        _taskCompletionSource = null;
-        return result;
-    }
-    
-    public void OnLoginResponse(LoginResponse response)
-    {
-        if (_taskCompletionSource == null || _taskCompletionSource.Task.IsCompleted) return;
-        if (response is { Response: { State: true } })
-            _taskCompletionSource.SetResult(true);
-        else
-            _taskCompletionSource.SetResult(false);
+        // -- 2、处理离线数据 -- //
+        var lastLoginTime = await _serviceProvider.GetRequiredService<ILoginService>().GetLastLoginTime(userId);
+        var outlineRequest = new OutlineMessageRequest
+        {
+            Id = userId,
+            LastLogoutTime = lastLoginTime.ToString()
+        };
+        var result2 = await messageHelper.SendMessageWithResponse<OutlineMessageResponse>(outlineRequest);
+        
+        // 处理离线数据
+        var userLoginService = _serviceProvider.GetRequiredService<IUserLoginService>();
+        await userLoginService.OperateOutlineMessage(userId, result2);
+        
+        // -- 3、获取用户详细信息 -- //
+        var userDetailRequest = new GetUserDetailMessageRequest
+        {
+            Id = userId,
+            Password = password
+        };
+        var result3 = await messageHelper.SendMessageWithResponse<GetUserDetailMessageResponse>(userDetailRequest);
+        
+        if (result3 is not {Response:{State:true}})
+        {
+            IsLogin = false;
+            UserId = string.Empty;
+            _logger.Error("登录失败，用户信息出错");
+            return false;
+        }
+        
+        // 登录成功，初始化账号信息
+        IsLogin = true;
+        UserId = userId;
+        User = _mapper.Map<User>(result3.User);
+        _logger.Information("机器人\"{UserId}\" 登录成功", userId);
+
+        return true;
     }
 
     public void OnLogoutCommand(LogoutCommand message)

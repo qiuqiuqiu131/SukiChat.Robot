@@ -2,64 +2,53 @@
 using System.Text;
 using System.Text.Json;
 using ChatRobot.Main.Entity;
+using ChatRobot.Main.Manager;
+using ChatRobot.Main.Service;
 using ChatServer.Common.Protobuf;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ChatRobot.Main.Helper;
 
 public interface IAIChatHelper
 {
-    Task<string> GetAIChatMessage(string textMessage);
+    Task<string> GetAIChatMessage(string apiKey, string apiUrl, string userId, List<APIChatMessage> chatMessage);
 }
 
 public class AIChatHelper : IAIChatHelper
 {
+    private readonly IConfigurationRoot _configurationRoot;
     private readonly HttpClient _httpClient;
-    
-    private readonly string _apiKey;
-    private readonly string _apiUrl;
 
     public AIChatHelper(IConfigurationRoot configurationRoot)
     {
+        _configurationRoot = configurationRoot;
+
         _httpClient = new HttpClient();
-        
-        _apiKey = configurationRoot["API:Key"]!;
-        _apiUrl = configurationRoot["API:URL"]!;
     }
 
-    public async Task<string> GetAIChatMessage(string textMessage)
+    public async Task<string> GetAIChatMessage(string apiKey, string apiUrl, string userId,
+        List<APIChatMessage> chatMessage)
     {
-        List<APIChatMessage> _conversationHistory = new List<APIChatMessage>();
-        _conversationHistory.Add(new APIChatMessage
-        {
-            role = "system",
-            content = "你是一个有帮助的AI助手。用中文回答用户的问题，回答要简洁专业。语气要温和同时可以适当幽默。"
-        });
-        _conversationHistory.Add(new APIChatMessage
-        {
-            role = "user",
-            content = textMessage
-        });
-        
         var request = new APIChatRequest
         {
             model = "deepseek-chat",
-            messages = _conversationHistory,
-            temperature = 0.7,
+            messages = chatMessage,
+            temperature = 1.3,
             max_tokens = 2000
         };
 
         var json = JsonSerializer.Serialize(request);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        _httpClient.DefaultRequestHeaders.Authorization = 
-            new AuthenticationHeaderValue("Bearer", _apiKey);
+        _httpClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", apiKey);
 
-        var response = await _httpClient.PostAsync(_apiUrl, content);
+        var response = await _httpClient.PostAsync(apiUrl, content);
         response.EnsureSuccessStatusCode();
 
         var responseJson = await response.Content.ReadAsStringAsync();
-        
+
         // 使用JsonDocument或反序列化为强类型对象来解析响应
         using var doc = JsonDocument.Parse(responseJson);
         var completion = doc.RootElement.GetProperty("choices")[0]

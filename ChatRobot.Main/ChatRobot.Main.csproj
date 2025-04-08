@@ -12,16 +12,14 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Reference Include="ChatClient.Tool">
-        <HintPath>..\..\..\Avalonia\ChatClient\ChatClient.Client\bin\Debug\net8.0\ChatClient.Tool.dll</HintPath>
-      </Reference>
       <Reference Include="ChatServer.Common">
         <HintPath>..\..\..\Avalonia\ChatClient\ChatClient.Client\bin\Debug\net8.0\ChatServer.Common.dll</HintPath>
       </Reference>
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Service\" />
+      <PackageReference Include="AutoMapper" Version="14.0.0" />
+      <PackageReference Include="Prism.Events" Version="9.0.537" />
     </ItemGroup>
 
 </Project>

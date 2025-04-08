@@ -1,4 +1,5 @@
 using ChatRobot.Client.Client;
+using ChatRobot.Main.Event;
 using ChatRobot.Main.Manager;
 using ChatServer.Common;
 using Google.Protobuf;
@@ -11,13 +12,13 @@ public class ProcessorBase<T> : IProcessor<T>
 {
     protected readonly IServiceProvider _container;
     protected readonly IUserManager _userManager;
-    protected readonly ISocketClient _socketClient;
+    private readonly IEventAggregator _eventAggregator;
 
     public ProcessorBase(IServiceProvider container)
     {
         _container = container;
         _userManager = container.GetRequiredService<IUserManager>();
-        _socketClient = container.GetRequiredService<ISocketClient>();
+        _eventAggregator = container.GetRequiredService<IEventAggregator>();
     }
 
     /// <summary>
@@ -26,6 +27,8 @@ public class ProcessorBase<T> : IProcessor<T>
     /// <param name="message"></param>
     public virtual async Task Process(T message)
     {
+        // 发送消息事件
+        _eventAggregator.GetEvent<ResponseEvent<T>>().Publish(message);
         if(_userManager.IsLogin)
             await OnProcess(message);
     }
@@ -38,13 +41,5 @@ public class ProcessorBase<T> : IProcessor<T>
     protected virtual Task OnProcess(T message)
     {
         return Task.CompletedTask;
-    }
-
-    protected async Task SendMessage(IMessage message)
-    {
-        if(_socketClient.Channel is { Open: true })
-        {
-            await _socketClient.Channel.WriteAndFlushProtobufAsync(message);
-        }
     }
 }

@@ -17,6 +17,10 @@ public class User
     public int HeadIndex { get; set; }
 
     public int HeadCount { get; set; }
+    
+    public string? PhoneNumber { get; set; }
+    
+    public string? EmailNumber { get; set; }
 
     public DateTime LastReadFriendMessageTime { get; set; } = DateTime.MinValue;
 

@@ -2,6 +2,7 @@
 using System.Reflection;
 using ChatServer.Common.Tool;
 using Google.Protobuf;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ChatRobot.Main.MessageOperate
@@ -31,11 +32,12 @@ namespace ChatRobot.Main.MessageOperate
         // 信号量,控制消息队列大小
         private readonly SemaphoreSlim semaphore;
 
-        public ProtobufDispatcher(IServiceProvider container)
+        public ProtobufDispatcher(IServiceProvider container,IConfigurationRoot configurationRoot)
         {
             this.container = container;
 
-            semaphore = new SemaphoreSlim(1);
+            var maxOperateNumber = configurationRoot.GetValue<int>("MaxOperateNumber", 20);
+            semaphore = new SemaphoreSlim(maxOperateNumber, maxOperateNumber);
         }
 
         /// <summary>
@@ -67,24 +69,26 @@ namespace ChatRobot.Main.MessageOperate
         /// <summary>
         /// 控制消息队列的执行
         /// </summary>
-        private async void ProcessQueue()
+        private void ProcessQueue()
         {
             foreach (var unit in queue.GetConsumingEnumerable())
             {
-                await semaphore.WaitAsync();
-
-                try
+                semaphore.Wait();
+                Task.Run(async () =>
                 {
-                    await OperateMessageUnit(unit);
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine(ex.Message);
-                }
-                finally
-                {
-                    semaphore.Release();
-                }
+                    try
+                    {
+                        await OperateMessageUnit(unit);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine(ex.Message);
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                });
             }
         }
 
