@@ -6,6 +6,7 @@ public class Robot
     public APIAddress API { get; set; }
     public List<string> System { get; set; }
     public bool AcceptFriendRequest { get; set; }
+    public float Temperature { get; set; }
 }
 
 public class Account

@@ -9,7 +9,7 @@ namespace ChatRobot.Main.Service;
 
 public interface IChatService
 {
-    Task<List<FriendChatMessage>> GetFriendChatMessages(string userId, string friendId,int count = 15);
+    Task<List<FriendChatMessage>> GetFriendChatMessages(string userId, string friendId,int count = 10);
     
     Task AddFriendChatMessage(string userId, FriendChatMessage friendChatMessage);
 }
@@ -25,7 +25,7 @@ public class ChatService:BaseService, IChatService
         _unitOfWork = containerProvider.GetRequiredService<IUnitOfWork>();
     }
 
-    public async Task<List<FriendChatMessage>> GetFriendChatMessages(string userId, string friendId,int count = 15)
+    public async Task<List<FriendChatMessage>> GetFriendChatMessages(string userId, string friendId,int count = 10)
     {
         var chatPrivateRepository = _unitOfWork.GetRepository<ChatPrivate>();
         var query = chatPrivateRepository.GetAll(

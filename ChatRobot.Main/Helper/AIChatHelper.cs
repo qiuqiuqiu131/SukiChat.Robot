@@ -12,7 +12,7 @@ namespace ChatRobot.Main.Helper;
 
 public interface IAIChatHelper
 {
-    Task<string> GetAIChatMessage(string apiKey, string apiUrl, string userId, List<APIChatMessage> chatMessage);
+    Task<string> GetAIChatMessage(string apiKey, string apiUrl ,float temperature, string userId, List<APIChatMessage> chatMessage);
 }
 
 public class AIChatHelper : IAIChatHelper
@@ -27,14 +27,14 @@ public class AIChatHelper : IAIChatHelper
         _httpClient = new HttpClient();
     }
 
-    public async Task<string> GetAIChatMessage(string apiKey, string apiUrl, string userId,
+    public async Task<string> GetAIChatMessage(string apiKey, string apiUrl,float temperature, string userId,
         List<APIChatMessage> chatMessage)
     {
         var request = new APIChatRequest
         {
             model = "deepseek-chat",
             messages = chatMessage,
-            temperature = 1.3,
+            temperature = temperature,
             max_tokens = 2000
         };
 

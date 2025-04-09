@@ -57,7 +57,7 @@ public class FriendChatMessageProcessor(IServiceProvider container,IMessageHelpe
             conversationHistory.AddRange(
                 from mess in chatMess.Messages 
                 where mess.ContentCase == ChatMessage.ContentOneofCase.TextMess 
-                select new APIChatMessage { role = role, content = $"content:{mess.TextMess.Text},time:{chatMess.Time}" });
+                select new APIChatMessage { role = role, content = mess.TextMess.Text });
         }
         conversationHistory.Add(new APIChatMessage
         {
@@ -70,7 +70,7 @@ public class FriendChatMessageProcessor(IServiceProvider container,IMessageHelpe
         try
         {
             var aiChatHelper = container.GetRequiredService<IAIChatHelper>();
-            result = await aiChatHelper.GetAIChatMessage(_userManager.Robot.API.Key,_userManager.Robot.API.URL,_userManager.UserId, conversationHistory);
+            result = await aiChatHelper.GetAIChatMessage(_userManager.Robot.API.Key,_userManager.Robot.API.URL, _userManager.Robot.Temperature, _userManager.UserId, conversationHistory);
         }
         catch (Exception e)
         {
