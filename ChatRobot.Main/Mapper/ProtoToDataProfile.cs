@@ -48,8 +48,6 @@ public class ProtoToDataProfile : Profile
                     string.IsNullOrEmpty(fm.SolvedTime) ? (DateTime?)null : DateTime.Parse(fm.SolvedTime)));
         #endregion
 
-        
-
         #region UserDetailMessage + User
 
         CreateMap<UserDetailMessage, User>()
