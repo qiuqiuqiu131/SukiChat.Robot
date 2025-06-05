@@ -25,7 +25,6 @@ public interface IUserManager
 
 public class UserManager : IUserManager
 {
-    private readonly ISocketClient _socketClient;
     private readonly ILogger _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly IMapper _mapper;
@@ -35,9 +34,8 @@ public class UserManager : IUserManager
     public string UserId { get; private set; }
     public User User { get; private set; }
 
-    public UserManager(ISocketClient socketClient,ILogger logger,IServiceProvider serviceProvider,IMapper mapper)
+    public UserManager(ILogger logger,IServiceProvider serviceProvider,IMapper mapper)
     {
-        _socketClient = socketClient;
         _logger = logger;
         _serviceProvider = serviceProvider;
         _mapper = mapper;
@@ -57,7 +55,7 @@ public class UserManager : IUserManager
         var result1 = await messageHelper.SendMessageWithResponse<LoginResponse>(loginRequest);
         
         // 处理登录结果
-        if(!(result1?.Response.State ?? false))
+        if(result1 == null || result1.Response.State == false)
         {
             IsLogin = false;
             UserId = string.Empty;
@@ -66,7 +64,8 @@ public class UserManager : IUserManager
         }
         
         // -- 2、处理离线数据 -- //
-        var lastLoginTime = await _serviceProvider.GetRequiredService<ILoginService>().GetLastLoginTime(userId);
+        var loginService = _serviceProvider.GetRequiredService<ILoginService>();
+        var lastLoginTime = await loginService.GetLastLoginTime(userId);
         var outlineRequest = new OutlineMessageRequest
         {
             Id = userId,
@@ -74,10 +73,18 @@ public class UserManager : IUserManager
         };
         var result2 = await messageHelper.SendMessageWithResponse<OutlineMessageResponse>(outlineRequest);
         
+        if(result2 == null)
+        {
+            IsLogin = false;
+            UserId = string.Empty;
+            _logger.Error("登录失败,请检查用户名和密码");
+            return false;
+        }
+
         // 处理离线数据
         var userLoginService = _serviceProvider.GetRequiredService<IUserLoginService>();
         await userLoginService.OperateOutlineMessage(userId, result2);
-        
+
         // -- 3、获取用户详细信息 -- //
         var userDetailRequest = new GetUserDetailMessageRequest
         {
@@ -85,15 +92,17 @@ public class UserManager : IUserManager
             Password = password
         };
         var result3 = await messageHelper.SendMessageWithResponse<GetUserDetailMessageResponse>(userDetailRequest);
-        
-        if (result3 is not {Response:{State:true}})
+
+        if (result3 == null || result3.Response.State == false)
         {
             IsLogin = false;
             UserId = string.Empty;
             _logger.Error("登录失败，用户信息出错");
             return false;
         }
-        
+
+        await loginService.Login(userId, password);
+
         // 登录成功，初始化账号信息
         IsLogin = true;
         UserId = userId;

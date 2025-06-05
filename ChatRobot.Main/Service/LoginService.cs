@@ -46,8 +46,10 @@ public class LoginService:BaseService,ILoginService
     
     public async Task<DateTime> GetLastLoginTime(string userId)
     {
-        var userLoginRepository = _unitOfWork.GetRepository<LoginHistory>();
-        var history = await userLoginRepository.GetFirstOrDefaultAsync(predicate: d => d.Id.Equals(userId),disableTracking:true);
-        return history?.LastLoginTime ?? DateTime.MinValue;
+        var repository = _unitOfWork.GetRepository<ChatPrivate>();
+        var entity = await repository.GetFirstOrDefaultAsync(predicate: d => d.UserTargetId == userId || d.UserFromId == userId, orderBy: d => d.OrderByDescending(d => d.Time));
+        if (entity == null)
+            return DateTime.MinValue;
+        return entity.Time;
     }
 }

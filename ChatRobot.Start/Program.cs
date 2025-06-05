@@ -16,7 +16,14 @@ class Program
         {
             Task.Run(() =>
             {
-                new RobotHost(robot).Start();
+                try
+                {
+                    new RobotHost(robot).Start();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
             });
         }
         Console.ReadLine();
