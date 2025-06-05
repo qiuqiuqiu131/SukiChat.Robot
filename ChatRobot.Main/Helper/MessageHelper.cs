@@ -43,8 +43,15 @@ internal class MessageHelper : IMessageHelper
         if (client.Channel == null)
             return false;
 
-        await client.Channel.WriteAndFlushProtobufAsync(message);
-        return true;
+        try
+        {
+            await client.Channel.WriteAndFlushProtobufAsync(message);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task<T?> SendMessageWithResponse<T>(IMessage message) where T : IMessage
@@ -57,24 +64,32 @@ internal class MessageHelper : IMessageHelper
         });
 
         if (client.Channel == null)
-            return default(T);
+            return default;
 
-        // 发送消息
-        await client.Channel.WriteAndFlushProtobufAsync(message);
-
-        Task wait = Task.Delay(TimeSpan.FromSeconds(int.Parse(configuration["OutOfTime"]!)));
-        var task = await Task.WhenAny(taskCompletionSource.Task, wait);
-        token?.Dispose();
-
-
-        if (task == taskCompletionSource.Task)
+        try
         {
-            return taskCompletionSource.Task.Result;
+            // 发送消息
+            await client.Channel.WriteAndFlushProtobufAsync(message);
+
+            Task wait = Task.Delay(TimeSpan.FromSeconds(int.Parse(configuration["OutOfTime"]!)));
+            var task = await Task.WhenAny(taskCompletionSource.Task, wait);
+            token?.Dispose();
+
+
+            if (task == taskCompletionSource.Task)
+            {
+                return taskCompletionSource.Task.Result;
+            }
+            else
+            {
+                taskCompletionSource.SetCanceled();
+                return default;
+            }
         }
-        else
+        catch
         {
-            taskCompletionSource.SetCanceled();
-            return default(T);
+            token?.Dispose();
+            return default;
         }
     }
 }
