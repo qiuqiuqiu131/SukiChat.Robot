@@ -1,6 +1,6 @@
 using ChatRobot.Client.Client;
+using ChatServer.Common.Helper;
 using ChatServer.Common.Protobuf;
-using ChatServer.Common.Tool;
 using DotNetty.Buffers;
 using DotNetty.Handlers.Timeout;
 using DotNetty.Transport.Channels;

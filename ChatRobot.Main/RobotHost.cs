@@ -81,6 +81,7 @@ public class RobotHost : Application
         services.AddTransient<IMessageHelper, MessageHelper>();
         
         // 添加Service
+        services.AddTransient<IChatRemoteService, ChatRemoteService>();
         services.AddTransient<ILoginService, LoginService>();
         services.AddTransient<IUserLoginService, UserLoginService>();
         services.AddTransient<IChatService, ChatService>();

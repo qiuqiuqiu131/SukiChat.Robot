@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Reflection;
-using ChatServer.Common.Tool;
+using ChatServer.Common.Helper;
 using Google.Protobuf;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

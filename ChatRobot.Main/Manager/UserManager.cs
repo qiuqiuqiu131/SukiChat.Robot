@@ -59,9 +59,11 @@ public class UserManager : IUserManager
         {
             IsLogin = false;
             UserId = string.Empty;
-            _logger.Error("登录失败,请检查用户名和密码");
+            _logger.Error("登录失败,请检查用户名和密码,并重新启动程序");
             return false;
         }
+        
+        _logger.Information("账号身份验证成功，正在获取账号离线数据...");
         
         // -- 2、处理离线数据 -- //
         var loginService = _serviceProvider.GetRequiredService<ILoginService>();
@@ -77,13 +79,15 @@ public class UserManager : IUserManager
         {
             IsLogin = false;
             UserId = string.Empty;
-            _logger.Error("登录失败,请检查用户名和密码");
+            _logger.Error("离线数据获取失败，请检查网络连接并重新启动程序");
             return false;
         }
-
+        
+        _logger.Information("账号离线数据获取成功，正在处理离线消息...");
+        
         // 处理离线数据
         var userLoginService = _serviceProvider.GetRequiredService<IUserLoginService>();
-        await userLoginService.OperateOutlineMessage(userId, result2);
+        await userLoginService.OperateOutlineMessage(userId, lastLoginTime, result2);
 
         // -- 3、获取用户详细信息 -- //
         var userDetailRequest = new GetUserDetailMessageRequest
@@ -97,7 +101,7 @@ public class UserManager : IUserManager
         {
             IsLogin = false;
             UserId = string.Empty;
-            _logger.Error("登录失败，用户信息出错");
+            _logger.Error("处理离线消息失败，本地数据库配置，检查数据库路径是否正确，并重新启动程序");
             return false;
         }
 

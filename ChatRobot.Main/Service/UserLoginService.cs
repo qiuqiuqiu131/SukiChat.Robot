@@ -8,17 +8,30 @@ namespace ChatRobot.Main.Service;
 
 public interface IUserLoginService
 {
-    Task OperateOutlineMessage(string userId, OutlineMessageResponse response);
+    Task OperateOutlineMessage(string userId, DateTime lastLogoutTime,OutlineMessageResponse response);
 }
 
 internal class UserLoginService(IServiceProvider containerProvider, IMapper mapper)
     : BaseService(containerProvider), IUserLoginService
 {
-    public async Task OperateOutlineMessage(string userId, OutlineMessageResponse outlineResponse)
+    public async Task OperateOutlineMessage(string userId, DateTime lastLoginTime, OutlineMessageResponse outlineResponse)
     {
-        await OperateFriendRequestMesssages(userId, outlineResponse.FriendRequests);
-
-        await OperateFriendChatMessages(userId, outlineResponse.FriendChats);
+        var tasks = new List<Task>();
+        
+        tasks.Add(OperateFriendRequestMesssages(userId,outlineResponse.FriendRequests));
+        tasks.Add(Task.Run(async () =>
+        {
+            var chatRemoteService = _scopedProvider.ServiceProvider.GetRequiredService<IChatRemoteService>();
+            var friendMessages = await chatRemoteService.GetFriendChatMessages(userId, lastLoginTime);
+            await OperateFriendChatMessages(userId, friendMessages);
+        }));
+        tasks.Add(Task.Run(async () =>
+        {
+            var chatRemoteService = _scopedProvider.ServiceProvider.GetRequiredService<IChatRemoteService>();
+            var chatPrivateMessages = await chatRemoteService.GetChatPrivateDetailMessages(userId, lastLoginTime);
+            await OperateChatPrivateDetailMessage(userId, chatPrivateMessages);
+        }));
+        await Task.WhenAll(tasks);
     }
 
     #region OperateOutLineData(处理离线未处理的消息,直接对本地数据库进行操作)
@@ -57,8 +70,6 @@ internal class UserLoginService(IServiceProvider containerProvider, IMapper mapp
         friendRequestMessages.Clear();
     }
     
-
-
     /// <summary>
     /// 处理好友聊天消息，离线时可能有用户给自己发送了聊天消息
     /// </summary>
@@ -72,20 +83,60 @@ internal class UserLoginService(IServiceProvider containerProvider, IMapper mapp
         {
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
             var chatPrivateRepository = unitOfWork.GetRepository<ChatPrivate>();
+            var relationRepository = unitOfWork.GetRepository<FriendRelation>();
             foreach (var chatMessage in friendChatMessages)
             {
                 var chatPrivate = mapper.Map<ChatPrivate>(chatMessage);
                 var result =
-                    await chatPrivateRepository.GetFirstOrDefaultAsync(predicate: d => d.ChatId.Equals(chatPrivate.ChatId));
+                    await chatPrivateRepository.GetFirstOrDefaultAsync(predicate: d =>
+                        d.ChatId.Equals(chatPrivate.ChatId));
                 if (result != null)
                     chatPrivate.Id = result.Id;
                 chatPrivateRepository.Update(chatPrivate);
+
+                var relation1 = await relationRepository.GetFirstOrDefaultAsync(
+                    predicate: d =>
+                        d.User1Id.Equals(chatMessage.UserFromId) && d.User2Id.Equals(chatMessage.UserTargetId),
+                    disableTracking: false);
+                if (relation1 != null && chatMessage.Id > relation1.LastChatId)
+                    relation1.IsChatting = true;
+
+                var relation2 = await relationRepository.GetFirstOrDefaultAsync(
+                    predicate: d =>
+                        d.User1Id.Equals(chatMessage.UserTargetId) && d.User2Id.Equals(chatMessage.UserFromId),
+                    disableTracking: false);
+                if (relation2 != null && chatMessage.Id > relation2.LastChatId)
+                    relation2.IsChatting = true;
             }
 
             await unitOfWork.SaveChangesAsync();
         }
 
         friendChatMessages.Clear();
+    }
+    
+    private async Task OperateChatPrivateDetailMessage(string userId,
+        IList<ChatPrivateDetailMessage> chatPrivateDetailMessages)
+    {
+        if (chatPrivateDetailMessages.Count == 0) return;
+        using (var scope = _scopedProvider.ServiceProvider.CreateScope())
+        {
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            var chatPrivateDetailRepository = unitOfWork.GetRepository<ChatPrivateDetail>();
+            foreach (var message in chatPrivateDetailMessages)
+            {
+                var chatMessage = mapper.Map<ChatPrivateDetail>(message);
+                if (await chatPrivateDetailRepository.ExistsAsync(d =>
+                        d.UserId == chatMessage.UserId && d.ChatPrivateId == chatMessage.ChatPrivateId))
+                    chatPrivateDetailRepository.Update(chatMessage);
+                else
+                    await chatPrivateDetailRepository.InsertAsync(chatMessage);
+            }
+
+            await unitOfWork.SaveChangesAsync();
+        }
+
+        chatPrivateDetailMessages.Clear();
     }
     #endregion
 }
